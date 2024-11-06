@@ -18,7 +18,7 @@ app.use(fileUpload());
 app.use(
   cors({
     // credentials: true,
-    origin: ["https://ecommercewithmern.netlify.app","http://localhost:5173"],
+    origin: ["https://ecommercewithmern.netlify.app", "http://localhost:5173", "https://officezens.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
