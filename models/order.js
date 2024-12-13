@@ -52,23 +52,22 @@ const orderSchema = new mongoose.Schema({
       },
     },
   ],
-  // user: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "User",
-  //   required: true,
-  // },
-
-  paymentInfo: {
-    id: {
-      type: String,
-      required: true,
-    },
-
-    status: {
-      type: String,
-      required: true,
-    },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
   },
+
+  // paymentInfo: {
+  //   id: {
+  //     type: String,
+  //     required: true,
+  //   },
+
+  //   status: {
+  //     type: String,
+  //     required: true,
+  //   },
+  // },
   itemsPrice: {
     type: Number,
     default: 0,
@@ -94,8 +93,8 @@ const orderSchema = new mongoose.Schema({
 
   orderStatus: {
     type: String,
-    enum: ["succeeded", "Shipped", "Delivered"],
-    default: "succeeded",
+    enum: ["Processing", "Shipped", "Delivered"],
+    default: "Processing",
   },
   deliveredAt: Date,
   createdAt: {

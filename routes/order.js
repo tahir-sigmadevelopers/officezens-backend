@@ -20,7 +20,7 @@ router.get("/all", getAllOrders);
 
 router
   .route("/:id")
-  .put(isAuthenticated, adminRoutes, updateOrder)
+  .put(updateOrder)
   .delete(isAuthenticated, adminRoutes, deleteOrder)
   .get(orderDetails);
 

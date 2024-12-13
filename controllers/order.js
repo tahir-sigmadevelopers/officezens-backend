@@ -12,9 +12,9 @@ export const createOrder = async (req, res, next) => {
       shippingCharges,
       tax,
       total,
+      user
     } = req.body;
 
-    console.log(req.body);
 
 
     const orderOptions = {
@@ -26,6 +26,7 @@ export const createOrder = async (req, res, next) => {
       tax,
       total,
       paidAt: Date.now(),
+      user
     };
 
     await Order.create(orderOptions);
@@ -58,10 +59,7 @@ export const myOrders = async (req, res, next) => {
 
 export const orderDetails = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id).populate(
-      "user",
-      "email name"
-    );
+    const order = await Order.findById(req.params.id);
     if (!order) {
       return next(new ErrorHandler("Invalid Id, Order Not Found", 404));
     } else {
@@ -78,7 +76,7 @@ export const orderDetails = async (req, res, next) => {
 export const getAllOrders = async (req, res, next) => {
   try {
     const ordersCount = await Order.countDocuments();
-    let orders = await Order.find();
+    let orders = await Order.find().populate("user");
 
     let totalAmount = 0;
 
@@ -101,29 +99,33 @@ export const getAllOrders = async (req, res, next) => {
 
 export const updateOrder = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order)
-      return next(new ErrorHandler("Invalid Id, Order Not Found", 404));
 
-    // Chnaging the Order Status
+    const { id } = req.params;
 
-    if (order.orderStatus === "Delivered") {
-      order.deliveredAt = new Date(Date.now());
-      return next(new ErrorHandler("Order is Already Delivered!", 400));
+    let order = await Order.findById(id)
+
+
+    if (!order) return next(new Error(`Order not found`))
+
+    switch (order.orderStatus) {
+      case "Processing":
+        order.orderStatus = "Shipped"
+        break;
+
+      case "Shipped":
+        order.orderStatus = "Delivered"
+        break;
+
+      default:
+        order.orderStatus = "Delivered"
+        break;
     }
 
-    if (req.body.status === "Shipped") {
-      order.orderItems.forEach(
-        async (order) => await updateStock(order.product, order.quantity)
-      );
-    }
-
-    order.orderStatus = req.body.status;
     await order.save();
 
     res.status(200).json({
       success: true,
-      message: "Order Status Updates Successfully",
+      message: "Order Updated Successfully",
     });
   } catch (error) {
     return next(new ErrorHandler(error, 500));
