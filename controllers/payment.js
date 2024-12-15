@@ -9,16 +9,26 @@ const stripe = new Stripe("sk_test_51NUfEASJnWbzaYvUILrpsUnV77HIInzvub6hGeP9l1aV
 export const processPayment = async (req, res, next) => {
   try {
     const { amount } = req.body;
+    console.log(amount);
 
-    // Create a payment intent
+
+
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
+      amount: Number(amount), // Amount in smallest currency unit
       currency: "inr",
-      description: "Payment for order on ECOMMERCE-MERN",
-      metadata: {
-        company: "ECOMMERCE-MERN",
-      },
+      // confirm: true, // Automatically confirm the payment
+
     });
+
+    console.log("Generated Payment Intent:", paymentIntent.client_secret);
+
+    if (!paymentIntent) {
+      console.error("Failed to create paymentIntent");
+      return res.status(500).json({ success: false, message: "Payment initialization failed" });
+    }
+
+
     res
       .status(200)
       .json({ success: true, client_secret: paymentIntent.client_secret });
