@@ -12,13 +12,10 @@ export const processPayment = async (req, res, next) => {
     console.log(amount);
 
 
-
-
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Number(amount), // Amount in smallest currency unit
       currency: "inr",
       // confirm: true, // Automatically confirm the payment
-
     });
 
     console.log("Generated Payment Intent:", paymentIntent.client_secret);
