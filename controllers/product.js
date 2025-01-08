@@ -91,7 +91,7 @@ export const getAllProducts = async (req, res, next) => {
     // Calculate the total pages
     let totalPages = Math.ceil(filteredOnlyProducts.length / limit);
 
-  
+
     // Return the response
     return res.status(200).json({
       success: true,
@@ -187,6 +187,8 @@ export const getAdminProducts = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
+    console.log(product);
+
 
     if (!product)
       return next(new ErrorHandler("This Product Does Not Exist!", 404));
