@@ -1,7 +1,6 @@
 {
-  "version": 2,
-  "name": "ECOMMERCE-MERN",
-  "builds": [{ "src": "public/app.js", "use": "@vercel/node" }],
-  "routes": [{ "src": "/(.*)", "dest": "public/app.js" }]
-}
-
+    "version": 2,
+    "name": "ECOMMERCE-MERN",
+    "builds": [{ "src": "server.js", "use": "@vercel/node" }],
+    "routes": [{ "src": "/(.*)", "dest": "/server.js" }]
+  }
