@@ -12,16 +12,18 @@ import {
   getLatestProducts,
   getOldProducts,
   getAllCategories,
+  newCategory,
 } from "../controllers/product.js";
 import isAuthenticated, { adminRoutes } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.post("/new", newProduct);
+router.post("/new/category", newCategory);
+router.get("/allcategories", getAllCategories);
 router.get("/latest", getLatestProducts);
 router.get("/old", getOldProducts);
 router.get("/all", getAllProducts);
-router.get("/allcategories", getAllCategories);
 
 router.put("/review", isAuthenticated, userReview);
 router.get("/reviews/all", isAuthenticated, adminRoutes, getAllReviews);

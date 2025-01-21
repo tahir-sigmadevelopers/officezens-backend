@@ -3,19 +3,19 @@ import mongoose from "mongoose";
 const ProductSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, "Please Enter Product Name"],
+    // required: [true, "Please Enter Product Name"],
   },
   description: {
     type: String,
-    required: [true, "Please Enter Product Description"],
+    // required: [true, "Please Enter Product Description"],
   },
   price: {
     type: Number,
-    required: [true, "Please Enter Product Price"],
+    // required: [true, "Please Enter Product Price"],
   },
   stock: {
     type: Number,
-    required: [true, "Please Enter Product Stock"],
+    // required: [true, "Please Enter Product Stock"],
   },
   ratings: {
     type: Number,
@@ -49,17 +49,19 @@ const ProductSchema = new mongoose.Schema({
     {
       public_id: {
         type: String,
-        required: true,
+        // required: true,
       },
       url: {
         type: String,
-        required: true,
+        // required: true,
       },
     },
   ],
   category: {
     type: String,
-    required: [true, "Please Enter Product Category"],
+  },
+  subCategory: {
+    type: String,
   },
 
   createdAt: {

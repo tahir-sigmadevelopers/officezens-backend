@@ -2,6 +2,33 @@ import Product from "../models/product.js";
 import ErrorHandler from "../middlewares/Error.js";
 import apiFeatures from "../utils/apiFeatures.js";
 import cloudinary from "cloudinary";
+import Category from "../models/category.js";
+
+export const newCategory = async (req, res, next) => {
+  try {
+
+    if (!req.body.category || !Array.isArray(req.body.subCategory)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid category data. 'category' and 'subCategory' are required.",
+      });
+    }
+    console.log(req.body);
+
+    const category = await Category.create(req.body);
+
+    return res.status(201).json({
+      success: true,
+      message: "Category Added Successfully",
+      category,
+    });
+  } catch (error) {
+    return next(
+      new ErrorHandler(`Error Occured While Creating the Product ${error}`, 500)
+    );
+  }
+};
+
 
 export const newProduct = async (req, res, next) => {
   try {
@@ -16,8 +43,10 @@ export const newProduct = async (req, res, next) => {
 
     const imagesLinks = [];
 
+
+
     for (let i = 0; i < images?.length; i++) {
-      const result = await cloudinary.v2.uploader.upload(images[i], {
+      const result = await cloudinary.v2.uploader.upload_large(images[i], {
         folder: "products",
       });
 
@@ -26,9 +55,7 @@ export const newProduct = async (req, res, next) => {
         url: result.secure_url,
       });
     }
-
     req.body.images = imagesLinks;
-    // req.body.user = req.user._id;
 
     const product = await Product.create(req.body);
 
@@ -38,6 +65,8 @@ export const newProduct = async (req, res, next) => {
       product,
     });
   } catch (error) {
+    console.log("main tu error: " + error.message);
+
     return next(
       new ErrorHandler(`Error Occured While Creating the Product ${error}`, 500)
     );
@@ -110,9 +139,8 @@ export const getAllProducts = async (req, res, next) => {
 export const getAllCategories = async (req, res, next) => {
   try {
 
-    let allCategoriesData = await Product.distinct("category");
+    let allCategories = await Category.find();
 
-    const allCategories = allCategoriesData.slice(0, 10);
 
     return res.status(200).json({
       success: true,
@@ -187,13 +215,13 @@ export const getAdminProducts = async (req, res, next) => {
 export const updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
-    console.log(product);
 
 
     if (!product)
       return next(new ErrorHandler("This Product Does Not Exist!", 404));
 
     let images = [];
+
 
     if (typeof req.body.images === "string") {
       images.push(req.body.images);
@@ -225,6 +253,7 @@ export const updateProduct = async (req, res, next) => {
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
+      useFindAndModify: false,
     });
     return res.status(200).json({
       success: true,
