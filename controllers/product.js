@@ -87,22 +87,16 @@ export const newCategory = async (req, res, next) => {
 
 
 
-
-
 export const getAllProducts = async (req, res, next) => {
   try {
-    // Define the base query object
     const baseQuery = {};
 
-    // Extract query parameters from the request
-    const { category, price, search, sort } = req.query;
+    const { category, price, search, sort, subCategory } = req.query;
 
     const page = Number(req.query.page) || 1;
-
     const limit = Number(process.env.Product_Per_Page) || 8;
     const skip = limit * (page - 1);
 
-    // Build the base query
     if (search) {
       baseQuery.name = {
         $regex: search,
@@ -111,45 +105,46 @@ export const getAllProducts = async (req, res, next) => {
     }
 
     if (price) {
-      baseQuery.price = {
-        $lte: Number(price)
-      };
+      baseQuery.price = { $lte: Number(price) };
     }
 
     if (category) {
-      baseQuery.category = category;
+      baseQuery.category = category.trim();  // Ensure spaces are removed
     }
 
-    // Define the products promise with sorting, limiting, and skipping
+    if (subCategory) {
+      baseQuery.subCategory = subCategory.trim(); // Ensure spaces are removed
+    }
+
+    // Fetch products with sorting and pagination
     const productsPromise = Product.find(baseQuery)
       .sort(sort ? { price: sort === "asc" ? 1 : -1 } : {})
       .limit(limit)
       .skip(skip);
 
-    // Execute both the filtered products and the full products count queries
-    const [products, filteredOnlyProducts] = await Promise.all([
-      productsPromise,
-      Product.find(baseQuery)
-    ]);
+    // Fetch total filtered products count
+    const filteredOnlyProducts = await Product.find(baseQuery);
 
-    // Calculate the total pages
     let totalPages = Math.ceil(filteredOnlyProducts.length / limit);
 
-
-    // Return the response
     return res.status(200).json({
       success: true,
       message: "All Products",
-      products,
+      products: await productsPromise,
       totalPages
     });
 
   } catch (error) {
     return next(
-      new ErrorHandler(`Error Occured While Getting the Product ${error}`, 500)
+      new ErrorHandler(`Error Occurred While Getting the Product ${error}`, 500)
     );
   }
 };
+
+
+
+
+
 
 export const getAllCategories = async (req, res, next) => {
   try {
@@ -276,7 +271,7 @@ export const updateProduct = async (req, res, next) => {
     res.status(200).json({
       success: true,
       product,
-      message:"Product Updated Successfully"
+      message: "Product Updated Successfully"
     });
 
 
