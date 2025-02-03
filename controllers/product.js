@@ -1,8 +1,65 @@
 import Product from "../models/product.js";
 import ErrorHandler from "../middlewares/Error.js";
-import apiFeatures from "../utils/apiFeatures.js";
 import cloudinary from "cloudinary";
 import Category from "../models/category.js";
+
+
+
+export const newProduct = async (req, res) => {
+  try {
+    let images = [];
+
+    // Ensure images is always an array
+    if (typeof req.body.images === "string") {
+      images.push(req.body.images);
+    } else {
+      images = req.body.images;
+    }
+
+    const imagesLinks = [];
+
+    // Upload each image to Cloudinary
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+
+      // Ensure the image is a base64 string
+      if (typeof image !== "string" || !image.startsWith("data:image")) {
+        throw new Error(`Invalid image format at index ${i}`);
+      }
+
+      // Upload base64 image to Cloudinary
+      const result = await cloudinary.v2.uploader.upload(image, {
+        folder: "products",
+      });
+
+      imagesLinks.push({
+        public_id: result.public_id,
+        url: result.secure_url,
+      });
+    }
+
+    // Update req.body.images with Cloudinary links
+    req.body.images = imagesLinks;
+
+    // Create product in the database
+    const product = await Product.create(req.body);
+
+    res.status(201).json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+
+
 
 export const newCategory = async (req, res, next) => {
   try {
@@ -30,48 +87,7 @@ export const newCategory = async (req, res, next) => {
 };
 
 
-export const newProduct = async (req, res, next) => {
-  try {
-    let images = [];
 
-
-    if (typeof req.body.images === "string") {
-      images.push(req.body.images);
-    } else {
-      images = req.body.images;
-    }
-
-    const imagesLinks = [];
-
-
-
-    for (let i = 0; i < images?.length; i++) {
-      const result = await cloudinary.v2.uploader.upload_large(images[i], {
-        folder: "products",
-      });
-
-      imagesLinks.push({
-        public_id: result.public_id,
-        url: result.secure_url,
-      });
-    }
-    req.body.images = imagesLinks;
-
-    const product = await Product.create(req.body);
-
-    return res.status(201).json({
-      success: true,
-      message: "Product Added Successfully",
-      product,
-    });
-  } catch (error) {
-    console.log("main tu error: " + error.message);
-
-    return next(
-      new ErrorHandler(`Error Occured While Creating the Product ${error}`, 500)
-    );
-  }
-};
 
 
 export const getAllProducts = async (req, res, next) => {
@@ -216,12 +232,14 @@ export const updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
 
+    console.log(product);
 
-    if (!product)
-      return next(new ErrorHandler("This Product Does Not Exist!", 404));
+    if (!product) {
+      return next(new ErrorHandler("Product not found", 404));
+    }
 
+    // Images Start Here
     let images = [];
-
 
     if (typeof req.body.images === "string") {
       images.push(req.body.images);
@@ -253,13 +271,19 @@ export const updateProduct = async (req, res, next) => {
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
+      runValidators: true,
       useFindAndModify: false,
     });
-    return res.status(200).json({
+
+    res.status(200).json({
       success: true,
       product,
-      message: "Product Updated Successfully",
     });
+
+
+
+
+
   } catch (error) {
     return next(
       new ErrorHandler(`Error Occured While Updating the Product ${error}`, 500)
