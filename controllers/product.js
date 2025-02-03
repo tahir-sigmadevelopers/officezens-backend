@@ -287,6 +287,26 @@ export const deleteProduct = async (req, res, next) => {
     );
   }
 };
+export const deleteCategory = async (req, res, next) => {
+  try {
+    const category = await Category.findById(req.params.id);
+
+    if (!category) {
+      return next(new ErrorHandler("This Category Does Not Exist!", 404));
+    }
+
+    await Category.findByIdAndDelete(req.params.id);
+    return res.status(200).json({
+      success: true,
+      message: "Category Deleted Successfully",
+      categoryId: category._id,
+    });
+  } catch (error) {
+    return next(
+      new ErrorHandler(`Error Occurred While Deleting the Product ${error}`, 500)
+    );
+  }
+};
 
 
 export const productDetails = async (req, res, next) => {

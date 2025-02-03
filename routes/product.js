@@ -13,6 +13,7 @@ import {
   getOldProducts,
   getAllCategories,
   newCategory,
+  deleteCategory
 } from "../controllers/product.js";
 import isAuthenticated, { adminRoutes } from "../middlewares/auth.js";
 
@@ -21,6 +22,7 @@ const router = express.Router();
 router.post("/new", newProduct);
 router.post("/new/category", newCategory);
 router.get("/allcategories", getAllCategories);
+router.delete("/delete/category/:id", deleteCategory);
 router.get("/latest", getLatestProducts);
 router.get("/old", getOldProducts);
 router.get("/all", getAllProducts);
