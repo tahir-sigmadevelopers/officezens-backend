@@ -70,7 +70,6 @@ export const newCategory = async (req, res, next) => {
         message: "Invalid category data. 'category' and 'subCategory' are required.",
       });
     }
-    console.log(req.body);
 
     const category = await Category.create(req.body);
 
@@ -232,7 +231,6 @@ export const updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
 
-    console.log(product);
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
@@ -278,6 +276,7 @@ export const updateProduct = async (req, res, next) => {
     res.status(200).json({
       success: true,
       product,
+      message:"Product Updated Successfully"
     });
 
 
