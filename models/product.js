@@ -64,6 +64,12 @@ const ProductSchema = new mongoose.Schema({
     type: String,
   },
 
+  variations: [
+    {
+      type: String,
+    }
+  ],
+
   createdAt: {
     type: Date,
     default: Date.now,

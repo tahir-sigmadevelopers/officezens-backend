@@ -7,6 +7,14 @@ import Category from "../models/category.js";
 
 export const newProduct = async (req, res) => {
   try {
+
+
+    // Check if variations are received as a string and split them into an array
+    if (typeof req.body?.variations === 'string') {
+      req.body.variations = req.body.variations.split(','); // Split by comma into an array
+    }
+
+
     let images = [];
 
     // Ensure images is always an array
