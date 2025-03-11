@@ -7,14 +7,7 @@ import Category from "../models/category.js";
 
 export const newProduct = async (req, res) => {
   try {
-
-
-    // Check if variations are received as a string and split them into an array
-    if (typeof req.body?.variations === 'string') {
-      req.body.variations = req.body.variations.split(','); // Split by comma into an array
-    }
-
-
+    // Process main product images
     let images = [];
 
     // Ensure images is always an array
@@ -48,6 +41,42 @@ export const newProduct = async (req, res) => {
 
     // Update req.body.images with Cloudinary links
     req.body.images = imagesLinks;
+
+    // Process variations
+    if (req.body.variations) {
+      let variations = [];
+      
+      if (typeof req.body.variations === 'string') {
+        try {
+          // Try to parse as JSON
+          variations = JSON.parse(req.body.variations);
+        } catch (e) {
+          // If not valid JSON, treat as comma-separated string
+          variations = req.body.variations.split(',').map(v => ({ name: v.trim() }));
+        }
+      } else if (Array.isArray(req.body.variations)) {
+        variations = req.body.variations;
+      }
+
+      // Process variation images if they exist
+      for (let i = 0; i < variations.length; i++) {
+        const variation = variations[i];
+        
+        // If variation has an image, upload it to Cloudinary
+        if (variation.image && typeof variation.image === 'string' && variation.image.startsWith('data:image')) {
+          const result = await cloudinary.v2.uploader.upload(variation.image, {
+            folder: "product-variations",
+          });
+          
+          variation.image = {
+            public_id: result.public_id,
+            url: result.secure_url
+          };
+        }
+      }
+      
+      req.body.variations = variations;
+    }
 
     // Create product in the database
     const product = await Product.create(req.body);
@@ -234,40 +263,97 @@ export const updateProduct = async (req, res, next) => {
   try {
     let product = await Product.findById(req.params.id);
 
-
     if (!product) {
-      return next(new ErrorHandler("Product not found", 404));
+      return next(new ErrorHandler("Product Not Found", 404));
     }
 
-    // Images Start Here
-    let images = [];
+    // Process main product images
+    if (req.body.images) {
+      let images = [];
 
-    if (typeof req.body.images === "string") {
-      images.push(req.body.images);
-    } else {
-      images = req.body.images;
-    }
+      if (typeof req.body.images === "string") {
+        images.push(req.body.images);
+      } else {
+        images = req.body.images;
+      }
 
-    if (images !== undefined) {
-      // Deleting Images From Cloudinary
+      // Delete old images from Cloudinary
       for (let i = 0; i < product.images.length; i++) {
         await cloudinary.v2.uploader.destroy(product.images[i].public_id);
       }
 
       const imagesLinks = [];
 
+      // Upload new images to Cloudinary
       for (let i = 0; i < images.length; i++) {
-        const result = await cloudinary.v2.uploader.upload(images[i], {
-          folder: "products",
-        });
+        const image = images[i];
 
-        imagesLinks.push({
-          public_id: result.public_id,
-          url: result.secure_url,
-        });
+        // Check if it's a new image (base64) or an existing one (object with url)
+        if (typeof image === "string" && image.startsWith("data:image")) {
+          const result = await cloudinary.v2.uploader.upload(image, {
+            folder: "products",
+          });
+
+          imagesLinks.push({
+            public_id: result.public_id,
+            url: result.secure_url,
+          });
+        } else if (image.url) {
+          // Keep existing image
+          imagesLinks.push(image);
+        }
       }
 
       req.body.images = imagesLinks;
+    }
+
+    // Process variations
+    if (req.body.variations) {
+      let variations = [];
+      
+      if (typeof req.body.variations === 'string') {
+        try {
+          // Try to parse as JSON
+          variations = JSON.parse(req.body.variations);
+        } catch (e) {
+          // If not valid JSON, treat as comma-separated string
+          variations = req.body.variations.split(',').map(v => ({ name: v.trim() }));
+        }
+      } else if (Array.isArray(req.body.variations)) {
+        variations = req.body.variations;
+      }
+
+      // Process variation images if they exist
+      for (let i = 0; i < variations.length; i++) {
+        const variation = variations[i];
+        
+        // If variation has an image and it's a new image (base64)
+        if (variation.image && typeof variation.image === 'string' && variation.image.startsWith('data:image')) {
+          // Delete old image if it exists
+          if (product.variations[i] && product.variations[i].image && product.variations[i].image.public_id) {
+            await cloudinary.v2.uploader.destroy(product.variations[i].image.public_id);
+          }
+          
+          // Upload new image
+          const result = await cloudinary.v2.uploader.upload(variation.image, {
+            folder: "product-variations",
+          });
+          
+          variation.image = {
+            public_id: result.public_id,
+            url: result.secure_url
+          };
+        } else if (variation.image && variation.image.url) {
+          // Keep existing image
+        } else {
+          // No image provided, check if there's an existing one to keep
+          if (product.variations[i] && product.variations[i].image) {
+            variation.image = product.variations[i].image;
+          }
+        }
+      }
+      
+      req.body.variations = variations;
     }
 
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
@@ -279,17 +365,9 @@ export const updateProduct = async (req, res, next) => {
     res.status(200).json({
       success: true,
       product,
-      message: "Product Updated Successfully"
     });
-
-
-
-
-
   } catch (error) {
-    return next(
-      new ErrorHandler(`Error Occured While Updating the Product ${error}`, 500)
-    );
+    return next(new ErrorHandler(`Error Occurred: ${error.message}`, 500));
   }
 };
 
@@ -341,6 +419,29 @@ export const productDetails = async (req, res, next) => {
 
     if (!product)
       return next(new ErrorHandler("This Product Does Not Exist!", 404));
+
+    // Transform old variation format to new format if needed
+    if (product.variations && product.variations.length > 0) {
+      // Check if variations are in old format (strings)
+      const needsTransform = typeof product.variations[0] === 'string' || 
+                            (typeof product.variations[0] === 'object' && 
+                             !product.variations[0].name);
+      
+      if (needsTransform) {
+        // Transform to new format but don't save to DB
+        product = product.toObject(); // Convert to plain object to modify
+        product.variations = product.variations.map(variation => {
+          if (typeof variation === 'string') {
+            return {
+              name: variation,
+              color: "",
+              image: { public_id: "", url: "" }
+            };
+          }
+          return variation;
+        });
+      }
+    }
 
     return res.status(200).json({
       success: true,

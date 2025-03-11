@@ -66,7 +66,24 @@ const ProductSchema = new mongoose.Schema({
 
   variations: [
     {
-      type: String,
+      name: {
+        type: String,
+        required: true
+      },
+      color: {
+        type: String,
+        default: ""
+      },
+      image: {
+        public_id: {
+          type: String,
+          default: ""
+        },
+        url: {
+          type: String,
+          default: ""
+        }
+      }
     }
   ],
 
