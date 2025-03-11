@@ -323,6 +323,36 @@ export const updateProduct = async (req, res, next) => {
         variations = req.body.variations;
       }
 
+      // Normalize variations to ensure they have the correct structure
+      variations = variations.map(variation => {
+        // If variation is a string, convert to object
+        if (typeof variation === 'string') {
+          return { name: variation, color: "", image: { public_id: "", url: "" } };
+        }
+        
+        // If variation name is a stringified JSON, parse it
+        if (variation.name && typeof variation.name === 'string' && 
+            variation.name.startsWith('{') && variation.name.includes('"name":"')) {
+          try {
+            const parsedVariation = JSON.parse(variation.name);
+            return {
+              name: parsedVariation.name || "",
+              color: parsedVariation.color || variation.color || "",
+              image: variation.image || { public_id: "", url: "" }
+            };
+          } catch (e) {
+            // If parsing fails, use as is
+          }
+        }
+        
+        // Ensure variation has all required fields
+        return {
+          name: variation.name || "",
+          color: variation.color || "",
+          image: variation.image || { public_id: "", url: "" }
+        };
+      });
+
       // Process variation images if they exist
       for (let i = 0; i < variations.length; i++) {
         const variation = variations[i];
@@ -347,8 +377,10 @@ export const updateProduct = async (req, res, next) => {
           // Keep existing image
         } else {
           // No image provided, check if there's an existing one to keep
-          if (product.variations[i] && product.variations[i].image) {
+          if (i < product.variations.length && product.variations[i] && product.variations[i].image) {
             variation.image = product.variations[i].image;
+          } else {
+            variation.image = { public_id: "", url: "" };
           }
         }
       }
@@ -364,6 +396,7 @@ export const updateProduct = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
+      message: "Product updated successfully",
       product,
     });
   } catch (error) {
@@ -420,27 +453,44 @@ export const productDetails = async (req, res, next) => {
     if (!product)
       return next(new ErrorHandler("This Product Does Not Exist!", 404));
 
-    // Transform old variation format to new format if needed
+    // Transform variations to ensure consistent format
     if (product.variations && product.variations.length > 0) {
-      // Check if variations are in old format (strings)
-      const needsTransform = typeof product.variations[0] === 'string' || 
-                            (typeof product.variations[0] === 'object' && 
-                             !product.variations[0].name);
+      // Convert to plain object to modify
+      product = product.toObject();
       
-      if (needsTransform) {
-        // Transform to new format but don't save to DB
-        product = product.toObject(); // Convert to plain object to modify
-        product.variations = product.variations.map(variation => {
-          if (typeof variation === 'string') {
+      // Process each variation to ensure consistent format
+      product.variations = product.variations.map(variation => {
+        // Case 1: String format (old)
+        if (typeof variation === 'string') {
+          return {
+            name: variation,
+            color: "",
+            image: { public_id: "", url: "" }
+          };
+        }
+        
+        // Case 2: Object format but with stringified JSON in name
+        if (variation.name && typeof variation.name === 'string' && 
+            variation.name.startsWith('{') && variation.name.includes('"name":"')) {
+          try {
+            const parsedVariation = JSON.parse(variation.name);
             return {
-              name: variation,
-              color: "",
-              image: { public_id: "", url: "" }
+              name: parsedVariation.name || "",
+              color: parsedVariation.color || variation.color || "",
+              image: variation.image || { public_id: "", url: "" }
             };
+          } catch (e) {
+            // If parsing fails, use as is
           }
-          return variation;
-        });
-      }
+        }
+        
+        // Case 3: Ensure all fields exist
+        return {
+          name: variation.name || "",
+          color: variation.color || "",
+          image: variation.image || { public_id: "", url: "" }
+        };
+      });
     }
 
     return res.status(200).json({
