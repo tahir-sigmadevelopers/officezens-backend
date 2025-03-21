@@ -131,7 +131,7 @@ export const getAllProducts = async (req, res, next) => {
     const { category, price, search, sort, subCategory } = req.query;
 
     const page = Number(req.query.page) || 1;
-    const limit = Number(process.env.Product_Per_Page) || 20;
+    const limit = Number(process.env.Product_Per_Page) || 30;
     const skip = limit * (page - 1);
 
     if (search) {
