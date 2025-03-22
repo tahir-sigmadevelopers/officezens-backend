@@ -70,9 +70,9 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         required: true
       },
-      color: {
-        type: String,
-        default: ""
+      price: {
+        type: Number,
+        default: 0
       },
       image: {
         public_id: {
@@ -83,10 +83,6 @@ const ProductSchema = new mongoose.Schema({
           type: String,
           default: ""
         }
-      },
-      price: {
-        type: Number,
-        default: 0
       }
     }
   ],

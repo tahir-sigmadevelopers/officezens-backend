@@ -352,7 +352,7 @@ export const updateProduct = async (req, res, next) => {
       variations = variations.map(variation => {
         // If variation is a string, convert to object
         if (typeof variation === 'string') {
-          return { name: variation, color: "", image: { public_id: "", url: "" }, price: 0 };
+          return { name: variation, price: 0, image: { public_id: "", url: "" } };
         }
         
         // If variation name is a stringified JSON, parse it
@@ -362,9 +362,8 @@ export const updateProduct = async (req, res, next) => {
             const parsedVariation = JSON.parse(variation.name);
             return {
               name: parsedVariation.name || "",
-              color: parsedVariation.color || variation.color || "",
-              image: variation.image || { public_id: "", url: "" },
-              price: parsedVariation.price || variation.price || 0
+              price: parsedVariation.price || variation.price || 0,
+              image: variation.image || { public_id: "", url: "" }
             };
           } catch (e) {
             // If parsing fails, use as is
@@ -374,9 +373,8 @@ export const updateProduct = async (req, res, next) => {
         // Ensure variation has all required fields
         return {
           name: variation.name || "",
-          color: variation.color || "",
-          image: variation.image || { public_id: "", url: "" },
-          price: variation.price || 0
+          price: variation.price || 0,
+          image: variation.image || { public_id: "", url: "" }
         };
       });
 
@@ -506,9 +504,8 @@ export const productDetails = async (req, res, next) => {
         if (typeof variation === 'string') {
           return {
             name: variation,
-            color: "",
+            price: 0,
             image: { public_id: "", url: "" },
-            price: 0
           };
         }
         
@@ -519,18 +516,15 @@ export const productDetails = async (req, res, next) => {
             const parsedVariation = JSON.parse(variation.name);
             return {
               name: parsedVariation.name || "",
-              color: parsedVariation.color || variation.color || "",
-              image: variation.image || { public_id: "", url: "" },
-              price: typeof parsedVariation.price === 'number' ? parsedVariation.price : 
-                     (typeof variation.price === 'number' ? variation.price : 0)
+              price: parsedVariation.price || variation.price || 0,
+              image: variation.image || { public_id: "", url: "" }
             };
           } catch (e) {
             // If parsing fails, use as is
             return {
               name: variation.name || "",
-              color: variation.color || "",
-              image: variation.image || { public_id: "", url: "" },
-              price: typeof variation.price === 'number' ? variation.price : 0
+              price: typeof variation.price === 'number' ? variation.price : 0,
+              image: variation.image || { public_id: "", url: "" }
             };
           }
         }
@@ -538,9 +532,8 @@ export const productDetails = async (req, res, next) => {
         // Case 3: Ensure all fields exist
         return {
           name: variation.name || "",
-          color: variation.color || "",
-          image: variation.image || { public_id: "", url: "" },
-          price: typeof variation.price === 'number' ? variation.price : 0
+          price: typeof variation.price === 'number' ? variation.price : 0,
+          image: variation.image || { public_id: "", url: "" }
         };
       });
 
