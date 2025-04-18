@@ -170,21 +170,41 @@ export const getAllProducts = async (req, res, next) => {
       baseQuery.subCategory = subCategory.trim(); // Ensure spaces are removed
     }
 
+    // Select only necessary fields to reduce payload size
+    const fieldsToSelect = {
+      name: 1,
+      price: 1,
+      images: { $slice: 1 }, // Only get the first image
+      stock: 1,
+      category: 1,
+      subCategory: 1,
+      ratings: 1,
+    };
+
     // Fetch products with sorting and pagination
     const productsPromise = Product.find(baseQuery)
+      .select(fieldsToSelect)
       .sort(sort ? { price: sort === "asc" ? 1 : -1 } : {})
       .limit(limit)
-      .skip(skip);
+      .skip(skip)
+      .lean(); // Use lean() for faster queries as it returns plain JS objects
 
-    // Fetch total filtered products count
-    const filteredOnlyProducts = await Product.find(baseQuery);
+    // Fetch total filtered products count (use countDocuments for better performance)
+    const totalCount = await Product.countDocuments(baseQuery);
 
-    let totalPages = Math.ceil(filteredOnlyProducts.length / limit);
+    let totalPages = Math.ceil(totalCount / limit);
+    
+    // Get the products
+    const products = await productsPromise;
+
+    // Set cache headers (5 minutes)
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Expires', new Date(Date.now() + 300000).toUTCString());
 
     return res.status(200).json({
       success: true,
       message: "All Products",
-      products: await productsPromise,
+      products,
       totalPages
     });
 
@@ -202,9 +222,12 @@ export const getAllProducts = async (req, res, next) => {
 
 export const getAllCategories = async (req, res, next) => {
   try {
+    // Get all categories with lean() for better performance
+    let allCategories = await Category.find().lean();
 
-    let allCategories = await Category.find();
-
+    // Set cache headers (10 minutes for categories since they change less frequently)
+    res.setHeader('Cache-Control', 'public, max-age=600');
+    res.setHeader('Expires', new Date(Date.now() + 600000).toUTCString());
 
     return res.status(200).json({
       success: true,
@@ -213,15 +236,33 @@ export const getAllCategories = async (req, res, next) => {
 
   } catch (error) {
     return next(
-      new ErrorHandler(`Error Occured While Getting the Product Categories ${error}`, 500)
+      new ErrorHandler(`Error Occurred While Getting the Product Categories ${error}`, 500)
     );
   }
 };
 
 export const getLatestProducts = async (req, res, next) => {
   try {
+    // Select only necessary fields to reduce payload size
+    const fieldsToSelect = {
+      name: 1,
+      price: 1,
+      images: { $slice: 1 }, // Only get the first image
+      description: 1,
+      stock: 1,
+      category: 1,
+    };
 
-    let latestProducts = await Product.find().sort({ createdAt: -1 }).limit(8)
+    // Get latest products with lean() for better performance
+    let latestProducts = await Product.find()
+      .select(fieldsToSelect)
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean();
+
+    // Set cache headers (5 minutes)
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Expires', new Date(Date.now() + 300000).toUTCString());
 
     return res.status(200).json({
       success: true,
@@ -230,7 +271,7 @@ export const getLatestProducts = async (req, res, next) => {
   } catch (error) {
     return next(
       new ErrorHandler(
-        `Error Occured While Getting Latest Products ${error}`,
+        `Error Occurred While Getting Latest Products ${error}`,
         500
       )
     );
@@ -239,8 +280,26 @@ export const getLatestProducts = async (req, res, next) => {
 
 export const getOldProducts = async (req, res, next) => {
   try {
+    // Select only necessary fields to reduce payload size
+    const fieldsToSelect = {
+      name: 1,
+      price: 1,
+      images: { $slice: 1 }, // Only get the first image
+      description: 1,
+      stock: 1,
+      category: 1,
+    };
 
-    let oldProducts = await Product.find().sort({ createdAt: +1 }).limit(8)
+    // Get oldest products with lean() for better performance
+    let oldProducts = await Product.find()
+      .select(fieldsToSelect)
+      .sort({ createdAt: +1 })
+      .limit(8)
+      .lean();
+
+    // Set cache headers (5 minutes)
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Expires', new Date(Date.now() + 300000).toUTCString());
 
     return res.status(200).json({
       success: true,
@@ -249,7 +308,7 @@ export const getOldProducts = async (req, res, next) => {
   } catch (error) {
     return next(
       new ErrorHandler(
-        `Error Occured While Getting Latest Products ${error}`,
+        `Error Occurred While Getting Latest Products ${error}`,
         500
       )
     );
@@ -540,6 +599,10 @@ export const productDetails = async (req, res, next) => {
       // Debug: Log the transformed variations
       console.log("Transformed Variations:", JSON.stringify(product.variations, null, 2));
     }
+    
+    // Set cache headers for product details (10 minutes)
+    res.setHeader('Cache-Control', 'public, max-age=600');
+    res.setHeader('Expires', new Date(Date.now() + 600000).toUTCString());
 
     return res.status(200).json({
       success: true,
@@ -547,7 +610,7 @@ export const productDetails = async (req, res, next) => {
     });
   } catch (error) {
     return next(
-      new ErrorHandler(`Error Occured While Getting the Product ${error}`, 500)
+      new ErrorHandler(`Error Occurred While Getting the Product ${error}`, 500)
     );
   }
 };
