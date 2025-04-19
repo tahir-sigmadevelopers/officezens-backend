@@ -20,7 +20,7 @@ app.use(fileUpload());
 app.use(
   cors({
     // credentials: true,
-    origin: ["https://ecommercewithmern.netlify.app", "http://localhost:5173", "https://officezens.vercel.app","http://relaxchair.pk","https://www.relaxchair.pk"],
+    origin: ["https://www.relaxchair.pk", "https://ecommercewithmern.netlify.app", "http://localhost:5173", "https://officezens.vercel.app", "http://relaxchair.pk"],
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
