@@ -56,6 +56,17 @@ const orderSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  // Add guest info for non-authenticated users
+  guestInfo: {
+    email: {
+      type: String,
+      trim: true,
+    },
+    name: {
+      type: String,
+      trim: true,
+    }
+  },
 
   // paymentInfo: {
   //   id: {

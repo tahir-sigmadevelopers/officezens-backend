@@ -12,10 +12,9 @@ export const createOrder = async (req, res, next) => {
       shippingCharges,
       tax,
       total,
-      user
+      user,
+      guestInfo
     } = req.body;
-
-
 
     const orderOptions = {
       shippingInfo,
@@ -26,8 +25,16 @@ export const createOrder = async (req, res, next) => {
       tax,
       total,
       paidAt: Date.now(),
-      user
     };
+
+    // If user is authenticated, associate order with user
+    if (user) {
+      orderOptions.user = user;
+    } 
+    // For guest checkout, store the guest email if provided
+    else if (guestInfo && guestInfo.email) {
+      orderOptions.guestInfo = { email: guestInfo.email };
+    }
 
     await Order.create(orderOptions);
 
