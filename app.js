@@ -83,7 +83,6 @@ app.post("/api/jazzcash-payment", async (req, res) => {
     });
 
     const data = await response.json();
-    console.log("JazzCash Response:", data);
 
     res.json(data);
   } catch (error) {
