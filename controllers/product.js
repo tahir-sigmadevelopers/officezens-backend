@@ -482,7 +482,7 @@ export const updateProduct = async (req, res, next) => {
           }
         } catch (e) {
           // Not JSON, treat as single image (base64 or URL)
-          images.push(req.body.images);
+        images.push(req.body.images);
         }
       } else {
         images = req.body.images;
@@ -495,17 +495,17 @@ export const updateProduct = async (req, res, next) => {
         const imagesLinks = [];
 
         try {
-        // Delete old images from Cloudinary
-        for (let i = 0; i < product.images.length; i++) {
-          await cloudinary.v2.uploader.destroy(product.images[i].public_id);
-        }
+      // Delete old images from Cloudinary
+      for (let i = 0; i < product.images.length; i++) {
+        await cloudinary.v2.uploader.destroy(product.images[i].public_id);
+      }
 
-        // Upload new images to Cloudinary
-        for (let i = 0; i < images.length; i++) {
-          const image = images[i];
+      // Upload new images to Cloudinary
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
 
-          // Check if it's a new image (base64) or an existing one (object with url)
-          if (typeof image === "string" && image.startsWith("data:image")) {
+        // Check if it's a new image (base64) or an existing one (object with url)
+        if (typeof image === "string" && image.startsWith("data:image")) {
               // Calculate base64 size (approx)
               const base64Size = Math.round((image.length * 3) / 4);
               const sizeInKB = base64Size / 1024;
@@ -516,20 +516,20 @@ export const updateProduct = async (req, res, next) => {
               }
 
               // Upload the image
-              const result = await cloudinary.v2.uploader.upload(image, {
-                folder: "products",
+            const result = await cloudinary.v2.uploader.upload(image, {
+              folder: "products",
                 quality: "auto:good",
                 fetch_format: "auto",
-              });
+            });
 
               uploadedImagesIds.push(result.public_id);
-              imagesLinks.push({
-                public_id: result.public_id,
-                url: result.secure_url,
-              });
-          } else if (image.url) {
-            // Keep existing image
-            imagesLinks.push(image);
+            imagesLinks.push({
+              public_id: result.public_id,
+              url: result.secure_url,
+            });
+        } else if (image.url) {
+          // Keep existing image
+          imagesLinks.push(image);
             } else {
               throw new Error(`Invalid image format at index ${i}`);
             }
@@ -604,7 +604,7 @@ export const updateProduct = async (req, res, next) => {
           // Validate variation name
           if (!variation.name || variation.name.trim() === "") {
             throw new Error("Variation name cannot be empty");
-          }
+        }
         
         // Ensure variation has all required fields
         return {
@@ -652,11 +652,11 @@ export const updateProduct = async (req, res, next) => {
         } else if (variation.image && typeof variation.image === 'object' && Object.keys(variation.image).length === 0) {
           // Empty object - no image provided
           // Check if there's an existing one to keep
-          if (i < product.variations.length && product.variations[i] && product.variations[i].image) {
-            variation.image = product.variations[i].image;
-          } else {
-            variation.image = { public_id: "", url: "" };
-          }
+            if (i < product.variations.length && product.variations[i] && product.variations[i].image) {
+              variation.image = product.variations[i].image;
+            } else {
+              variation.image = { public_id: "", url: "" };
+            }
         } else {
           // No image provided or invalid format, check if there's an existing one to keep
           if (i < product.variations.length && product.variations[i] && product.variations[i].image) {
