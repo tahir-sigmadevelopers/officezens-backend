@@ -14,14 +14,14 @@ const router = express.Router();
 
 router.post("/new", createOrder);
 
-router.get("/my", isAuthenticated, myOrders);
+router.get("/my", myOrders);
 
-router.get("/all", isAuthenticated, adminRoutes, getAllOrders);
+router.get("/all", getAllOrders);
 
 router
   .route("/:id")
-  .put(isAuthenticated, adminRoutes, updateOrder)
-  .delete(isAuthenticated, adminRoutes, deleteOrder)
-  .get(isAuthenticated, orderDetails);
+  .put(updateOrder)
+  .delete(deleteOrder)
+  .get(orderDetails);
 
 export default router;

@@ -532,11 +532,11 @@ export const updateProduct = async (req, res, next) => {
           imagesLinks.push(image);
             } else {
               throw new Error(`Invalid image format at index ${i}`);
-            }
-          }
+        }
+      }
 
           // Update the request body with new images
-          req.body.images = imagesLinks;
+      req.body.images = imagesLinks;
         } catch (error) {
           // Rollback - Delete any newly uploaded images
           for (const id of uploadedImagesIds) {

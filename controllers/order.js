@@ -106,29 +106,28 @@ export const getAllOrders = async (req, res, next) => {
 
 export const updateOrder = async (req, res, next) => {
   try {
-
     const { id } = req.params;
 
-    let order = await Order.findById(id)
+    let order = await Order.findById(id);
 
-
-    if (!order) return next(new Error(`Order not found`))
+    if (!order) return next(new Error(`Order not found`));
 
     switch (order.orderStatus) {
       case "Processing":
-        order.orderStatus = "Shipped"
+        order.orderStatus = "Shipped";
         break;
 
       case "Shipped":
-        order.orderStatus = "Delivered"
+        order.orderStatus = "Delivered";
         break;
 
       default:
-        order.orderStatus = "Delivered"
+        order.orderStatus = "Delivered";
         break;
     }
 
-    await order.save();
+    // Save with validateBeforeSave: false to skip validation
+    await order.save({ validateBeforeSave: false });
 
     res.status(200).json({
       success: true,
