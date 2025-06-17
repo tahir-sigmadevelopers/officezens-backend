@@ -13,7 +13,7 @@ import {
   updateUserProfile,
   deleteUserProfile,
 } from "../controllers/user.js";
-import isAuthenticated, { adminRoutes } from "../middlewares/auth.js";
+import  { adminRoutes, isAuthenticated } from "../middlewares/auth.js";
 
 const router = express.Router();
 

@@ -2,7 +2,7 @@ import User from "../models/user.js";
 import ErrorHandler from "./Error.js";
 import jwt from "jsonwebtoken";
 
-const isAuthenticated = async (req, res, next) => {
+export const isAuthenticated = async (req, res, next) => {
   try {
     const { ecommerce } = req.cookies;
 
@@ -25,5 +25,3 @@ export const adminRoutes = (req, res, next) => {
 
   next();
 };
-
-export default isAuthenticated;

@@ -30,7 +30,7 @@ export const createOrder = async (req, res, next) => {
     // If user is authenticated, associate order with user
     if (user) {
       orderOptions.user = user;
-    } 
+    }
     // For guest checkout, store the guest email if provided
     else if (guestInfo && guestInfo.email) {
       orderOptions.guestInfo = { email: guestInfo.email };
@@ -51,16 +51,26 @@ export const createOrder = async (req, res, next) => {
 
 export const myOrders = async (req, res, next) => {
   try {
-    const orders = await Order.find({
-      user: req.user._id,
-    }).populate("user", "email name");
-
+    let orders;
+    
+    // If email is provided in query, use it to fetch guest orders
+    if (req.query.email) {
+      // Find orders where guestInfo.email matches the provided email
+      orders = await Order.find({"guestInfo.email": req.query.email});
+    } 
+    // Otherwise use the authenticated user's ID
+    else if (req.user && req.user._id) {
+      orders = await Order.find({ user: req.user._id });
+    } else {
+      return next(new ErrorHandler("Authentication required", 401));
+    }
+    
     res.status(200).json({
       success: true,
       orders,
     });
   } catch (error) {
-    return next(new ErrorHandler(error, 500));
+    return next(new ErrorHandler(error.message, 500));
   }
 };
 
@@ -69,14 +79,27 @@ export const orderDetails = async (req, res, next) => {
     const order = await Order.findById(req.params.id);
     if (!order) {
       return next(new ErrorHandler("Invalid Id, Order Not Found", 404));
-    } else {
-      res.status(200).json({
-        success: true,
-        order,
-      });
     }
+
+    // For authenticated users, check if the order belongs to them
+    if (req.user && req.user._id) {
+      if (order.user && order.user.toString() !== req.user._id.toString()) {
+        return next(new ErrorHandler("Unauthorized to access this order", 403));
+      }
+    } 
+    // For guest users, verify with the email in query param
+    else if (req.query.email) {
+      if (!order.guestInfo || order.guestInfo.email !== req.query.email) {
+        return next(new ErrorHandler("Unauthorized to access this order", 403));
+      }
+    }
+    
+    res.status(200).json({
+      success: true,
+      order,
+    });
   } catch (error) {
-    return next(new ErrorHandler(error, 500));
+    return next(new ErrorHandler(error.message, 500));
   }
 };
 

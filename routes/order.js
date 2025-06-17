@@ -1,6 +1,6 @@
 import express from "express";
 
-import isAuthenticated, { adminRoutes } from "../middlewares/auth.js";
+import { isAuthenticated, adminRoutes } from "../middlewares/auth.js";
 import {
   createOrder,
   getAllOrders,
@@ -12,16 +12,25 @@ import {
 
 const router = express.Router();
 
+// Create a new middleware that makes authentication optional
+const optionalAuth = (req, res, next) => {
+  // Try to authenticate, but continue even if it fails
+  isAuthenticated(req, res, (err) => {
+    // Continue to the next middleware regardless of authentication result
+    next();
+  });
+};
+
 router.post("/new", createOrder);
 
-router.get("/my", myOrders);
+router.get("/my", optionalAuth, myOrders);
 
-router.get("/all", getAllOrders);
+router.get("/all", isAuthenticated, adminRoutes, getAllOrders);
 
 router
   .route("/:id")
-  .put(updateOrder)
-  .delete(deleteOrder)
-  .get(orderDetails);
+  .put(isAuthenticated, adminRoutes, updateOrder)
+  .delete(isAuthenticated, adminRoutes, deleteOrder)
+  .get(optionalAuth, orderDetails);
 
 export default router;

@@ -15,7 +15,7 @@ import {
   newCategory,
   deleteCategory
 } from "../controllers/product.js";
-import isAuthenticated, { adminRoutes } from "../middlewares/auth.js";
+import { adminRoutes, isAuthenticated } from "../middlewares/auth.js";
 import validateProductImages from "../middlewares/imageValidation.js";
 
 const router = express.Router();
